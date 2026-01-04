@@ -41,8 +41,7 @@ try {
 }
 
 // Configuration: Root Directory for Files
-// Using the same default as the Electron app
-const ROOT_DIR = 'C:/Katalog/IBC Ingenieurbau-Consult GmbH/IBC Ingenieurbau-Consult GmbH - Katalog';
+const ROOT_DIR = process.env.ROOT_DIR || '/app/documents_to_scan';
 
 // Helper: Sanitize FTS Query
 function sanitizeFtsQuery(query) {
@@ -76,7 +75,7 @@ app.get('/api/tree', async (req, res) => {
         res.json(result);
     } catch (err) {
         console.error("Error reading directory:", err);
-        res.status(500).json({ error: err.message });
+        res.json([]);
     }
 });
 
@@ -92,9 +91,9 @@ app.get('/api/search', (req, res) => {
 
         const stmt = db.prepare(`
             SELECT 
-                files.filepath as original_path, -- Alias specifically for consistency
+                files.original_path as filepath, -- Corrected column name
                 files.filename,
-                files.processed_path,       -- Get S3 Key
+                files.processed_path,
                 snippet(search_index, 1, '<b>', '</b>', '...', 15) as snippet
             FROM search_index 
             JOIN files ON search_index.file_id = files.id
@@ -104,9 +103,8 @@ app.get('/api/search', (req, res) => {
         `);
         const results = stmt.all(sanitized);
         
-        // Map results to ensure frontend gets the correct 'filepath' (original for ID, but we know it has processed version)
         const mappedResults = results.map(r => ({
-            filepath: r.original_path,
+            filepath: r.filepath,
             filename: r.filename,
             snippet: r.snippet
         }));

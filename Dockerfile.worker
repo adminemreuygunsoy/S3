@@ -24,7 +24,6 @@ RUN pip install --no-cache-dir \
     pdf2image \
     img2pdf \
     tqdm \
-    better-sqlite3-proxy \
     requests \
     boto3
 
