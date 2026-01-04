@@ -92,7 +92,6 @@ app.get('/api/search', (req, res) => {
         const stmt = db.prepare(`
             SELECT 
                 files.original_path as filepath, -- Corrected column name
-                files.filename,
                 files.processed_path,
                 snippet(search_index, 1, '<b>', '</b>', '...', 15) as snippet
             FROM search_index 
@@ -105,7 +104,7 @@ app.get('/api/search', (req, res) => {
         
         const mappedResults = results.map(r => ({
             filepath: r.filepath,
-            filename: r.filename,
+            filename: path.basename(r.filepath), // Derive filename from path
             snippet: r.snippet
         }));
 
