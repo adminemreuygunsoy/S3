@@ -1,0 +1,39 @@
+# --- Python Environment with OCR Tools ---
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# 1. Install System Dependencies (Tesseract, Ghostscript, Poppler)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    tesseract-ocr-tur \
+    ghostscript \
+    poppler-utils \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install Python Dependencies
+COPY pipeline/requirements.txt .
+# If requirements.txt doesn't exist yet, we install manually (fallback)
+# Ideally, we should generate requirements.txt first.
+RUN pip install --no-cache-dir \
+    pytesseract \
+    pdf2image \
+    img2pdf \
+    tqdm \
+    better-sqlite3-proxy \
+    requests \
+    boto3
+
+# 3. Copy Pipeline Code
+COPY pipeline ./pipeline
+# Copy Database Schema or Init scripts if needed (assuming shared volume for DB)
+
+# 4. Environment Variables
+ENV PYTHONUNBUFFERED=1
+
+# 5. Default Command (Run Pipeline)
+CMD ["python", "pipeline/pipeline.py"]

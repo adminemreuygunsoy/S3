@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # --- 1. Web Application (Frontend + Backend) ---
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: archive-viewer-app
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - app_data:/app/data  # Persistent SQLite DB
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/index.db
+      - S3_ENDPOINT=http://seaweedfs:8333
+      - S3_BUCKET=archive
+      - AWS_ACCESS_KEY_ID=any
+      - AWS_SECRET_ACCESS_KEY=any
+    depends_on:
+      - seaweedfs
+
+  # --- 2. Worker (Python ETL Pipeline) ---
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: archive-viewer-worker
+    restart: always
+    volumes:
+      - app_data:/app/data # Shared DB
+      - scan_data:/app/documents_to_scan # Folder to drop files into via SFTP
+    environment:
+      - DB_PATH=/app/data/index.db
+      - S3_ENDPOINT=http://seaweedfs:8333
+      - S3_BUCKET=archive
+      - AWS_ACCESS_KEY_ID=any
+      - AWS_SECRET_ACCESS_KEY=any
+    depends_on:
+      - seaweedfs
+
+  # --- 3. SeaweedFS (Storage) ---
+  seaweedfs:
+    image: chrislusf/seaweedfs
+    container_name: seaweedfs
+    restart: always
+    ports:
+      - "9333:9333"
+      - "8333:8333"
+    command: "server -s3 -dir=/data"
+    volumes:
+      - seaweedfs_data:/data
+
+volumes:
+  app_data:      # Stores index.db
+  scan_data:     # Stores raw files uploaded to server
+  seaweedfs_data: # Stores processed S3 chunks
