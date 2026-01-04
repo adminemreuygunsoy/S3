@@ -10,8 +10,9 @@
     "pipeline": "python pipeline/pipeline.py"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@aws-sdk/client-s3": "^3.400.0",
+    "@aws-sdk/s3-request-presigner": "^3.962.0",
+    "@google/generative-ai": "^0.24.1",
     "better-sqlite3": "^9.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
